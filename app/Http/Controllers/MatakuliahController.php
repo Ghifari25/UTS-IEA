@@ -18,7 +18,7 @@ class MatakuliahController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'kode' => 'required|string|unique:matakuliahs,kode',
+            'kode' => 'required|string',    
             'nama' => 'required|string',
             'jadwal' => 'required|string',
         ]);
