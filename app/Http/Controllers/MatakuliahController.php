@@ -6,9 +6,28 @@ use App\Http\Resources\MatakuliahResource;
 use App\Models\Matakuliah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Iluminate\Support\Facades\Http;
+
+class MatakuliahService
+{
+    public function getAll()
+    {
+        $response = Http::get('http://localhost:8001/api/matakuliah');
+        return $response->json();
+    }
+
+    public function showMatkul(MatakuliahService $matakuliahs)
+    {
+        $data = $matakuliahs->gettAll();
+        return response()->json($data);
+    }
+}
 
 class MatakuliahController extends Controller
 {
+
+   
+
     public function index()
     {
         $matakuliahs = Matakuliah::all();
@@ -31,9 +50,9 @@ class MatakuliahController extends Controller
         return new MatakuliahResource($matakuliahs, 'Success', 'Mata Kuliah created successfully');
     }
 
-    public function show($kode)
+    public function show($id)
     {
-        $matakuliahs = Matakuliah::where('kode', $kode)->first();
+        $matakuliahs = Matakuliah::where('id', $id)->first();
 
         if ($matakuliahs) {
             return new MatakuliahResource($matakuliahs, 'Success', 'Mata Kuliah found');
@@ -42,31 +61,42 @@ class MatakuliahController extends Controller
         }
     }
 
-    public function update(Request $request, $kode)
+    public function update(Request $request, $id)
     {
-        $matakuliahs = Matakuliah::where('kode', $kode)->first();
+        // Ambil data mata kuliah berdasarkan ID
+        $matakuliahs = Matakuliah::find($id);
 
+        // Cek apakah mata kuliah ditemukan
         if (!$matakuliahs) {
             return new MatakuliahResource(null, 'Failed', 'Mata Kuliah not found');
         }
 
+        // Validasi data yang diterima
         $validator = Validator::make($request->all(), [
-            'kode' => 'required|string|unique:matakuliahs,kode,' . $matakuliahs->id,
+            'kode' => 'required|string|unique:matakuliahs,kode,' . $id,  // Pastikan kode unik, kecuali pada record yang sedang diupdate
             'nama' => 'required|string',
-            'jadwal' => 'required|integer',
+            'jadwal' => 'required|string',  // Jadwal harus string (sesuai format waktu)
         ]);
 
+        // Jika validasi gagal, return error
         if ($validator->fails()) {
             return new MatakuliahResource(null, 'Failed', $validator->errors());
         }
 
-        $matakuliahs->update($request->all());
+        // Update data mata kuliah dengan data yang valid
+        $matakuliahs->update([
+            'kode' => $request->kode,
+            'nama' => $request->nama,
+            'jadwal' => $request->jadwal
+        ]);
+
+        // Kembalikan response sukses
         return new MatakuliahResource($matakuliahs, 'Success', 'Mata Kuliah updated successfully');
     }
 
-    public function destroy($kode)
+    public function destroy($id)
     {
-        $matakuliahs = Matakuliah::where('kode', $kode)->first();
+        $matakuliahs = Matakuliah::where('id', $id)->first();
 
         if (!$matakuliahs) {
             return new MatakuliahResource(null, 'Failed', 'Mata Kuliah not found');
